@@ -1,39 +1,22 @@
-// App.js
-import React, { useEffect, useState } from 'react';
-import BookForm from './BookForm';
-import ReviewForm from './ReviewForm';
-import BookList from './BookList';
-import { getBooks, addBook, addReview } from './api';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AddInterview from './components/AddInterview';
+import UpdateInterview from './components/UpdateInterview';
+import ViewInterviews from './components/ViewInterviews';
+import Home from './components/Home'; // ⬅️ new import
+import './App.css';
 
-export default function App() {
-  const [books, setBooks] = useState([]);
-
-  const loadBooks = async () => {
-    const data = await getBooks();
-    setBooks(data);
-  };
-
-  useEffect(() => {
-    loadBooks();
-  }, []);
-
-  const handleAddBook = async (book) => {
-    await addBook(book);
-    await loadBooks();
-  };
-
-  const handleAddReview = async (review) => {
-    await addReview(review);
-    await loadBooks();
-  };
-
+function App() {
   return (
-    <div>
-      <h1>Book Review App</h1>
-      <BookForm onAddBook={handleAddBook} />
-      <ReviewForm books={books} onAddReview={handleAddReview} />
-      <BookList books={books} />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} /> {/* ⬅️ home route */}
+        <Route path="/add-interview" element={<AddInterview />} />
+        <Route path="/update-interview/:id" element={<UpdateInterview />} />
+        <Route path="/interviews" element={<ViewInterviews />} />
+      </Routes>
+    </Router>
   );
 }
 
+export default App;
