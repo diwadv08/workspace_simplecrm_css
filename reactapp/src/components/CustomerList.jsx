@@ -16,8 +16,8 @@ const CustomerList = ({ customers, onDelete, onEdit }) => {
             <td>{c.phone}</td>
             <td>{c.company}</td>
             <td>
-              <button onClick={() => onEdit(c)}>Edit</button>
-              <button onClick={() => onDelete(c.id)}>Delete</button>
+              <button onClick={() => onEdit(c)} className="editBtn">Edit</button>
+              <button onClick={() => onDelete(c.id)} className="deleteBtn">Delete</button>
             </td>
           </tr>
         ))}

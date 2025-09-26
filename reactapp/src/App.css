@@ -101,10 +101,14 @@ th, td {
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
+tr:nth-child(even){
+  background-color:#f3f4f6;
+}
 
 th {
-  background: var(--bg);
+  background: var(--primary);
   font-weight: 600;
+  color:white;
 }
 
 tr:hover td {
@@ -163,4 +167,10 @@ footer {
   table, th, td {
     font-size: 0.875rem;
   }
+}
+.editBtn{
+  ba
+}
+.deleteBtn{
+
 }
