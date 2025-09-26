@@ -1,93 +1,120 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import axios from 'axios';
-import { within } from '@testing-library/react';
-
-import Home from '../components/Home';
-import AddInterview from '../components/AddInterview';
-import ViewInterviews from '../components/ViewInterviews';
-import UpdateInterview from '../components/UpdateInterview';
-
-jest.mock('axios');
-
-// Test 1: Home component renders with static text
-test('renders_Home_component_with_static_text', () => {
-  render(
-    <BrowserRouter>
-      <Home />
-    </BrowserRouter>
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import App from '../App';
+import "@testing-library/jest-dom"
+// Global mock
+beforeEach(() => {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve([]),
+    })
   );
-  const title = screen.getByText(/Interview Scheduler/i);
-  expect(title).toBeInTheDocument();
+  window.alert = jest.fn();
 });
 
-// Test 2: AddInterview form fields with placeholders
-test('renders_AddInterview_form_fields_with_placeholders', () => {
-  render(
-    <BrowserRouter>
-      <AddInterview />
-    </BrowserRouter>
-  );
-
-  expect(screen.getByPlaceholderText(/Candidate Name/i)).toBeInTheDocument();
-  expect(screen.getByPlaceholderText(/Interviewer Name/i)).toBeInTheDocument();
-  expect(screen.getByPlaceholderText(/Status/i)).toBeInTheDocument();
-  expect(screen.getByPlaceholderText(/Feedback/i)).toBeInTheDocument();
+test('rendersNavbarLinksCorrectly', () => {
+  render(<App />);
+  expect(screen.getByText('Home')).toBeInTheDocument();
+  expect(screen.getByText('Customers')).toBeInTheDocument();
 });
 
-// Test 3: AddInterview heading renders correctly
-test('renders_AddInterview_heading_text', () => {
-  render(
-    <BrowserRouter>
-      <AddInterview />
-    </BrowserRouter>
-  );
-  expect(screen.getByText(/Add Interview/i)).toBeInTheDocument();
+test('navigatesToHomePage', () => {
+  render(<App />);
+  expect(screen.getByText('Welcome to the Simple CRM Dashboard')).toBeInTheDocument();
 });
 
-// Test 4: ViewInterviews renders all expected table headers
-test('renders_ViewInterviews_table_headers', () => {
-  render(
-    <BrowserRouter>
-      <ViewInterviews />
-    </BrowserRouter>
-  );
-
-  // Look within the table for column headers
-  const table = screen.getByRole('table');
-  const headers = within(table).getAllByRole('columnheader');
-
-  expect(headers.map(h => h.textContent)).toEqual(
-    expect.arrayContaining([
-      'ID',
-      'Candidate',
-      'Interviewer',
-      'Date',
-      'Time',
-      'Status',
-      'Feedback',
-      'Actions'
-    ])
-  );
+test('navigatesToCustomersPage', async () => {
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+  expect(await screen.findByText('Customer Management')).toBeInTheDocument();
 });
 
-// Test 5: UpdateInterview component renders without crashing
-test('renders_UpdateInterview_component_without_crashing', async () => {
-  // Mock axios.get to prevent API crash
-  axios.get.mockResolvedValueOnce({
-    data: [
-      { id: 1, candidate: 'Test', interviewer: 'John', date: '2025-08-01', time: '09:00', status: 'Scheduled', feedback: 'Pending' }
-    ]
+test('showsNoCustomersMessage', async () => {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+  );
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+  expect(await screen.findByText('Customer Management')).toBeInTheDocument();
+});
+
+test('rendersCustomerFromApi', async () => {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve([{ id: 1, name: 'John Doe', email: 'john@example.com', phone: '123', company: 'Acme Inc' }]),
+    })
+  );
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+  expect(await screen.findByText('John Doe')).toBeInTheDocument();
+  expect(screen.getByText('john@example.com')).toBeInTheDocument();
+});
+
+test('addsNewCustomerSuccessfully', async () => {
+  fetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }));
+
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+
+  fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Jane Doe' } });
+  fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: 'jane@example.com' } });
+  fireEvent.change(screen.getByPlaceholderText('Phone'), { target: { value: '456' } });
+  fireEvent.change(screen.getByPlaceholderText('Company'), { target: { value: 'Tech Corp' } });
+
+  fireEvent.click(screen.getByText('Add Customer'));
+
+  await waitFor(() => {
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
-
-  render(
-    <BrowserRouter>
-      <UpdateInterview />
-    </BrowserRouter>
-  );
-
-  // Wait for heading
-  const heading = await screen.findByText(/Update Interview/i);
-  expect(heading).toBeInTheDocument();
 });
+
+test('editsExistingCustomer', async () => {
+  const customers = [{ id: 1, name: 'John Doe', email: 'john@example.com', phone: '123', company: 'Acme Inc' }];
+
+  fetch
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve(customers) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve(customers) }));
+
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+
+  fireEvent.click(await screen.findByText('Edit'));
+  fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'Updated Name' } });
+  fireEvent.click(screen.getByText('Add Customer'));
+
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+});
+
+test('deletesCustomerSuccessfully', async () => {
+  const customers = [{ id: 1, name: 'John Doe', email: 'john@example.com', phone: '123', company: 'Acme Inc' }];
+
+  fetch
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve(customers) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }))
+    .mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }));
+
+  window.history.pushState({}, 'Customers Page', '/customers');
+  render(<App />);
+
+  fireEvent.click(await screen.findByText('Delete'));
+
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+});
+
+test('footerRendersCorrectly', () => {
+  render(<App />);
+  expect(screen.getByText('© 2025 Simple CRM Dashboard')).toBeInTheDocument();
+});
+
+test('navbarTitleRenders', () => {
+  render(<App />);
+  expect(screen.getByText('CRM Dashboard')).toBeInTheDocument();
+});
+
+
