@@ -169,8 +169,10 @@ footer {
   }
 }
 .editBtn{
-  ba
+  background:green;
+  color: white !important;
 }
 .deleteBtn{
-
+  background:#de4141;
+  color: white !important;
 }
