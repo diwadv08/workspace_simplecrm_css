@@ -26,7 +26,7 @@ const CustomerForm = ({ onSave, editing }) => {
       <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
       <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} required />
       <input name="company" placeholder="Company" value={form.company} onChange={handleChange} required />
-      <button type="submit">Add Customer</button>
+      <button type="submit">Save</button>
     </form>
   );
 };

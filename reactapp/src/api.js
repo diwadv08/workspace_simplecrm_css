@@ -1,4 +1,4 @@
-const API_URL = "https://8080-eeffcfcabfdb331531831bccfaccecfone.premiumproject.examly.io/api/customers";
+const API_URL = "https://8080-fbdedafcaedabcdd333220481ebaccebeedctwo.premiumproject.examly.io/api/customers";
 
 export const getCustomers = async () => {
   const res = await fetch(API_URL);
